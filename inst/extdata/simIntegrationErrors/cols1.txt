@@ -1,0 +1,4 @@
+id("SubID")
+time("time")
+obs(CumHazardObs<-"CumHazardObs")
+table(file="posthoc.csv", time(0), LAM, SHAPE)

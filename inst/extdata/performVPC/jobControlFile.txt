@@ -1,0 +1,5 @@
+test.mdl
+jobArgsCombined.txt data1.txt cols1.txt test.mdl
+*.csv *.txt *.log *.asc *.dat *.LOG
+1
+WorkFlow,jobArgsCombined.txt:1,,predout.csv,*.csv *.txt *.log *.asc *.dat *.LOG,progress.txt 

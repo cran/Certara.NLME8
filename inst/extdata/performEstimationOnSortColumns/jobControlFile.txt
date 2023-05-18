@@ -1,0 +1,7 @@
+test.mdl
+jobArgsCombined.txt data1.txt cols1.txt test.mdl
+*.csv *.txt *.log *.asc *.dat *.LOG
+3
+dVdBodyWeight,jobArgsCombined.txt:1,*.*,out.txt,*.csv *.txt *.log *.asc *.dat *.LOG,progress.txt
+dCldBodyWeight,jobArgsCombined.txt:2,*.*,out.txt,*.csv *.txt *.log *.asc *.dat *.LOG,progress.txt
+dVdBodyWeight dCldBodyWeight,jobArgsCombined.txt:3,*.*,out.txt,*.csv *.txt *.log *.asc *.dat *.LOG,progress.txt

@@ -1,0 +1,20 @@
+test.mdl
+jobArgsCombined.txt data1.txt cols1.txt test.mdl newNlmeControlFile.txt newNlmeargsCombined.txt
+*.csv *.txt *.log *.LOG
+16
+cshot000,newNlmeargsCombined.txt:1,,out0000.txt,out0000.txt,progress.txt
+cshot001 V-BodyWeight,newNlmeargsCombined.txt:2,,out1000.txt,out1000.txt,progress.txt
+cshot002 Cl-BodyWeight,newNlmeargsCombined.txt:3,,out0100.txt,out0100.txt,progress.txt
+cshot003 V-BodyWeight Cl-BodyWeight,newNlmeargsCombined.txt:4,,out1100.txt,out1100.txt,progress.txt
+cshot004 V2-Gender,newNlmeargsCombined.txt:5,,out0010.txt,out0010.txt,progress.txt
+cshot005 V-BodyWeight V2-Gender,newNlmeargsCombined.txt:6,,out1010.txt,out1010.txt,progress.txt
+cshot006 Cl-BodyWeight V2-Gender,newNlmeargsCombined.txt:7,,out0110.txt,out0110.txt,progress.txt
+cshot007 V-BodyWeight Cl-BodyWeight V2-Gender,newNlmeargsCombined.txt:8,,out1110.txt,out1110.txt,progress.txt
+cshot008 Cl2-Gender,newNlmeargsCombined.txt:9,,out0001.txt,out0001.txt,progress.txt
+cshot009 V-BodyWeight Cl2-Gender,newNlmeargsCombined.txt:10,,out1001.txt,out1001.txt,progress.txt
+cshot010 Cl-BodyWeight Cl2-Gender,newNlmeargsCombined.txt:11,,out0101.txt,out0101.txt,progress.txt
+cshot011 V-BodyWeight Cl-BodyWeight Cl2-Gender,newNlmeargsCombined.txt:12,,out1101.txt,out1101.txt,progress.txt
+cshot012 V2-Gender Cl2-Gender,newNlmeargsCombined.txt:13,,out0011.txt,out0011.txt,progress.txt
+cshot013 V-BodyWeight V2-Gender Cl2-Gender,newNlmeargsCombined.txt:14,,out1011.txt,out1011.txt,progress.txt
+cshot014 Cl-BodyWeight V2-Gender Cl2-Gender,newNlmeargsCombined.txt:15,,out0111.txt,out0111.txt,progress.txt
+cshot015 V-BodyWeight Cl-BodyWeight V2-Gender Cl2-Gender,newNlmeargsCombined.txt:16,,out1111.txt,out1111.txt,progress.txt

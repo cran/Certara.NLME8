@@ -1,0 +1,5 @@
+id("Subject")
+time("Act_Time")
+dose(A1<-"Amount")
+obs(CObs<-"Conc")
+table(file="posthoc.csv", time(0), V, Cl, V2, Cl2)

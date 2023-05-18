@@ -1,0 +1,7 @@
+id("id")
+time("time")
+dose(A1<-"dose")
+covr(sex<-"sex"("male" = 0, "female" = 1))
+covr(wt<-"wt")
+covr(age<-"age")
+obs(CObs<-"conc")

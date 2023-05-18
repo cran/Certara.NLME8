@@ -1,0 +1,37 @@
+
+test(){
+
+	# ====================================================
+	# PK model
+	# ===================================================
+	cfMicro(A1, Cl / V, first = (Aa = Ka))
+	dosepoint(Aa)
+	C = A1 / V
+
+	# ====================================================
+	# Residual error model
+	# ===================================================
+	error(CEps = 0.1)
+	observe(CObs = C * (1 + CEps))
+
+	# ====================================================
+	# Structural model parameters
+	# ===================================================
+	# Covariate
+	fcovariate(Sex())
+	covariate(Age, Age1)
+
+	# Structural model parameters
+	stparm(Ka = tvKa * exp(nKa))
+	stparm(V = tvV * exp(nV))
+	stparm(Cl = tvCl * exp(dCldSex1*(Sex==1)) * exp(nCl))
+
+	# fixed effects
+	fixef(tvKa = c(, 0.8, ))
+	fixef(tvV = c(, 4.5, ))
+	fixef(tvCl = c(, 1.2, ))
+	fixef(dCldSex1(enable=c(0)) = c(, 0.3, ))
+
+	# random effects
+	ranef(diag(nKa, nV, nCl) = c(0.01, 0.01, 0.01))
+}

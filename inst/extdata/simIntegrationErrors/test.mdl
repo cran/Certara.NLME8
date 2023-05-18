@@ -1,0 +1,28 @@
+test(){
+	
+	stparm(LAM =   exp( tvLAM + nLAM)  )
+	fixef(tvLAM = c( , -3, )) # true value: -3.71118
+	ranef(diag(nLAM) = c(1)) # true value: 0.01
+	
+	stparm(SHAPE =   tvSHAPE  )
+	fixef(tvSHAPE = c( ,0.451741, ) ) # true value: 1.451741	
+
+	#----------------------------------------------
+	# check cumulative hazard function calculation
+	# --------------------------------------------
+	hazard = SHAPE/LAM*(t/LAM)^(SHAPE - 1)
+	deriv(CumHazard = hazard)
+	
+	# -------------------------------------------
+	# Residual error model 
+	# -------------------------------------------
+	error(CumHazardEps = 0.1)
+	observe(CumHazardObs = CumHazard * (1 + CumHazardEps))
+		
+}
+
+
+
+
+
+

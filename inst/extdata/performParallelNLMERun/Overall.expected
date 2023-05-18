@@ -1,0 +1,2 @@
+"Scenario","RetCode","LogLik","X.2LL","AIC","BIC","nParm","nObs","nSub","EpsShrinkage","Condition"
+"performParallelNLMERun",4,-772.76678,1545.53356,1563.53356,1588.00005,9,112,16,0.43203,NA

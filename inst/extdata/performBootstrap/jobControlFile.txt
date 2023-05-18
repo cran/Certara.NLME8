@@ -1,0 +1,5 @@
+test.mdl
+jobArgsCombined.txt data1.txt cols1.txt test.mdl
+*.csv *.txt *.log *.LOG
+1
+performBootstrap,jobArgsCombined.txt:1,,out.txt,*.csv *.txt *.log *.asc *.dat *.LOG,progress.txt

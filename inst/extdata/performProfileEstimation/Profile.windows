@@ -1,0 +1,6 @@
+Scenario,Theta,Estimate,LogLik,RetCode,Delta,Percent
+performProfileEstimation,tvV,7.954820,1484.464290,1,-2,
+performProfileEstimation,tvV,8.954820,1496.766260,1,-1,
+performProfileEstimation,tvV,9.954820,1500.947370,1,0,
+performProfileEstimation,tvV,10.954820,1497.536670,1,1,
+performProfileEstimation,tvV,11.954820,1489.437100,1,2,

@@ -1,0 +1,19 @@
+test(){
+    cfMicro(A1,Cl/V, Cl2/V, Cl2/V2)
+    dosepoint(A1)
+    C = A1 / V
+    error(CEps=0.1)
+    observe(CObs=C * ( 1 + CEps))
+    stparm(V = tvV * ((BodyWeight/mean(BodyWeight))^dVdBodyWeight)   * exp(nV))
+    stparm(Cl = tvCl * ((BodyWeight/mean(BodyWeight))^dCldBodyWeight)   * exp(nCl))
+    stparm(V2 = tvV2 * exp(nV2))
+    stparm(Cl2 = tvCl2 * exp(nCl2))
+    covariate(BodyWeight)
+    fixef( tvV = c(,1,))
+    fixef( tvCl = c(,1,))
+    fixef( tvV2 = c(,1,))
+    fixef( tvCl2 = c(,1,))
+    fixef( dVdBodyWeight(enable=c(0)) = c(,0,))
+    fixef( dCldBodyWeight(enable=c(1)) = c(,0,))
+    ranef(diag(nV,nCl,nV2,nCl2) =  c(1,1,1,1))
+}

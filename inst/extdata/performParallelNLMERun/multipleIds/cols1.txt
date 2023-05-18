@@ -1,0 +1,9 @@
+id("Source", "ID")
+time("Time")
+dose(Aa<-"Dose")
+covr(Sex<-"Sex"())
+covr(Age<-"Age")
+covr(Age1<-"Age1")
+obs(CObs<-"CObs")
+table(file="posthoc.csv", covr(Sex, Age, Age1), Ka, V, Cl, mode=keep)
+

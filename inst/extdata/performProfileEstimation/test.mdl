@@ -1,0 +1,15 @@
+test(){
+	cfMicro(A1, Cl / V)
+	dosepoint(A1)
+	C = A1 / V
+	error(CEps = 0.0943278)
+	observe(CObs = C * (1 + CEps))
+	stparm(V = tvV * exp(nV))
+	stparm(Cl = tvCl * exp(nCl))
+	covariate(sex())
+	covariate(wt)
+	covariate(age)
+	fixef(tvV = c(, 9.95482, ))
+	fixef(tvCl = c(, 0.145171, ))
+	ranef(diag(nV, nCl) = c(0.12638825, 0.11623659))
+}

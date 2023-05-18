@@ -1,0 +1,183 @@
+
+UpdateMDLfrom_dmptxt <- function(dmpfile = "dmp.txt", SharedWorkingDir, model_file, compile = TRUE) {
+  if (dirname(model_file) == ".") {
+    model_file <- file.path(SharedWorkingDir, model_file)
+  }
+
+  # dmp has thetas omegas and sigma
+  if (dirname(dmpfile) == ".") {
+    dmptxtToRead <- file.path(SharedWorkingDir, dmpfile)
+  } else {
+    dmptxtToRead <- dmpfile
+  }
+  # trying to get the header
+  mdlfile <- paste(readLines(model_file,
+    n = -1,
+    warn = FALSE
+  ),
+  collapse = "\n"
+  )
+  # remove comments from header
+  OneLine2Slash <- "(?:\\/\\/(?:\\\\\\n|[^\\n])*(?=$|\\n))"
+  OneLineSharp <- "(?:#(?:\\\\\\n|[^\\n])*(?=$|\\n))"
+  Asterisk <- "(?:\\/\\*[\\s\\S]*?\\*\\/)"
+  pattern <- paste(OneLine2Slash,
+    OneLineSharp,
+    Asterisk,
+    sep = "|", collapse = "|"
+  )
+
+  fileWOComments <- gsub(pattern, "\n", mdlfile, perl = TRUE)
+  mdlheader <- substr(fileWOComments, 1, regexpr("{", fileWOComments, fixed = TRUE)[1])
+
+  if (!file.exists(dmptxtToRead)) {
+    stop("File ", dmptxtToRead, "used for model update not found")
+  }
+
+  # find forzen fixefs and enables
+  # if hash is given use it
+  NLME_HASH <- as.integer(Sys.getenv("NLME_HASH"))
+  if (!is.na(NLME_HASH) && NLME_HASH > 0) {
+    NLME_HASH <- paste("-hash", NLME_HASH)
+  } else {
+    NLME_HASH <- character(0)
+  }
+
+  dirnameModel <- dirname(model_file)
+
+  TDL5_run <-
+    system2(path.expand(file.path(Sys.getenv("INSTALLDIR"), "TDL5")),
+      args = c(
+        NLME_HASH, "-i",
+        shQuote(model_file, type = "cmd"),
+        shQuote(dirnameModel, type = "cmd")
+      ),
+      stdout = TRUE
+    )
+
+  ModelInfoPath <- file.path(dirnameModel, "ModelInfo.txt")
+
+  if (!file.exists(ModelInfoPath)) {
+    stop(paste0(
+      "Cannot create file for mapping:\n",
+      ModelInfoPath,
+      "\nTDL5 output:\n",
+      paste0(TDL5_run, collapse = "\n")
+    ))
+  }
+
+  ModelInfo <- readLines(ModelInfoPath, warn = FALSE)
+  fixefLine <-
+    ModelInfo[grepl("^\\(fixedeffects ", ModelInfo)]
+  fixefStrings <-
+    unlist(strsplit(fixefLine, split = "(\\(fixedeffects\\W*\\()|(\\)\\W*\\()|(\\)\\))"))
+  fixefStrings <- fixefStrings[fixefStrings != ""]
+  splittedFixefsStrings <-
+    strsplit(fixefStrings, split = " ")
+  fixefInfoDF <- data.frame(splittedFixefsStrings)
+  colnames(fixefInfoDF) <- fixefInfoDF[1, ]
+  fixefInfoDF <- fixefInfoDF[-c(1), ]
+  rownames(fixefInfoDF) <- c("enable", "freeze", "value")
+
+  # get rid of residuals and read results
+  dmpLines <- shrinkDmpDotTxt(dmptxtToRead)
+  source(textConnection(dmpLines), local = TRUE)
+
+  cat("\n override", mdlheader, "\n", file = model_file, sep = "\n", append = TRUE)
+
+  epsilon <- dmp.txt$sigma
+  fixedEffects <- dmp.txt$coefficients$fixed
+
+
+  if (length(epsilon) > 0) {
+    for (epsilonName in colnames(epsilon)) {
+      cat("   \nerror(", epsilonName, " = ", sprintf("%.15g", fixedEffects[epsilonName]), ")\n", file = model_file, append = TRUE)
+    }
+  }
+
+  # if there is a sigma, get rid of it since it is written as epsilon
+  if (length(epsilon) > 0) {
+    head(fixedEffects, -1)
+  }
+
+  fixedEffectNames <- names(fixedEffects)
+  if (length(fixedEffects) > 0) {
+    fixefString <- ""
+    for (ifixef in seq_along(fixedEffects)) {
+      EnableFreezeFlag <- character(0)
+      FreezeFlag <- as.numeric(fixefInfoDF["freeze", fixedEffectNames[ifixef]])
+      EnableFlag <- as.numeric(fixefInfoDF["enable", fixedEffectNames[ifixef]])
+      if (fixedEffectNames[ifixef] %in% colnames(fixefInfoDF)) {
+        if (FreezeFlag > 0) {
+          # frozen
+          EnableFreezeFlag <- "(freeze)"
+        } else if (EnableFlag >= 0) {
+          EnableFreezeFlag <- paste0("(enable = c(", EnableFlag, "))")
+        }
+      }
+
+      fixefString <- paste0(
+        fixefString,
+        "   \nfixef(", fixedEffectNames[ifixef], EnableFreezeFlag,
+        " = c(,", sprintf("%.15g", fixedEffects[ifixef]), ",))\n"
+      )
+    }
+
+    cat(fixefString, file = model_file, append = TRUE)
+  }
+
+  randomEffects <- data.frame(dmp.txt$omega)
+  randomEffectsNames <- colnames(randomEffects)
+  if (length(randomEffects) > 0) {
+    ranefString <- paste0("   \nranef(block(", paste(randomEffectsNames, collapse = ", "), ") = c(")
+
+    for (iRanefRow in 1:length(dimnames(dmp.txt$omega)[[1]])) {
+      for (iRanefCol in 1:iRanefRow) {
+        if (iRanefCol + iRanefRow > 2) {
+          ranefString <- paste0(ranefString, ", ")
+        }
+
+        ranefString <- paste0(
+          ranefString,
+          sprintf("%.8g", dmp.txt$omega[iRanefRow, iRanefCol])
+        )
+      }
+    }
+
+    ranefString <- paste0(ranefString, "))")
+    cat(ranefString, file = model_file, append = TRUE)
+  }
+
+  cat("}", file = model_file, append = TRUE)
+
+
+  TDL5_run <-
+    system2(path.expand(file.path(Sys.getenv("INSTALLDIR"), "TDL5")),
+      args = c(
+        NLME_HASH, "-r",
+        shQuote(model_file, type = "cmd"),
+        shQuote(dirnameModel, type = "cmd")
+      ),
+      stdout = TRUE
+    )
+
+  newModelFile <- gsub("\\w$", "x", model_file)
+  if (!file.exists(newModelFile)) {
+    stop(paste0(
+      "Cannot update estimates:\n",
+      newModelFile,
+      "\nTDL5 output:\n",
+      paste0(TDL5_run, collapse = "\n")
+    ))
+  }
+
+  # compiling the resulted model if requested
+  if (compile) {
+    file.rename(model_file, paste0(model_file, "_old"))
+    file.rename(newModelFile, model_file)
+    generateNLMEScriptAndRun("COMPILE")
+    return(model_file)
+  } else {
+    return(newModelFile)
+  }
+}
