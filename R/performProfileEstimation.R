@@ -29,6 +29,7 @@ performProfileEstimation <- function(args, reportProgress = FALSE) {
     check_Arguments(requiredargs, args, "performProfileEstimation")
   }
 
+  rm(list = ls(envir = nlmeEnv), envir = nlmeEnv)
   assign("reportProgress", reportProgress, envir = nlmeEnv)
 
   localWorkingDir <- gsub("\\", "/", args[4], fixed = TRUE)

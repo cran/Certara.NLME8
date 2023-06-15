@@ -22,5 +22,6 @@ performShotgunCovarSearch <- function(args, reportProgress = FALSE) {
     check_Arguments(requiredargs, args, "performShotgunCovarSearch")
   }
 
+  rm(list = ls(envir = nlmeEnv), envir = nlmeEnv)
   performParallelNLMERun(args = args, reportProgress = reportProgress)
 }

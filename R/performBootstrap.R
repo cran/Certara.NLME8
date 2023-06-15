@@ -37,6 +37,7 @@ performBootstrap <-
       check_Arguments(requiredargs, args, "performBootstrap")
     }
 
+    rm(list = ls(envir = nlmeEnv), envir = nlmeEnv)
     assign("reportProgress", reportProgress, envir = nlmeEnv)
 
     tryCatch({

@@ -80,7 +80,7 @@ runNLMEInitialRun <- function(MpiNumCores, MpiArgument, parallelMethod, localWor
       break
     }
     if (IsEarlyTerminationRequested()) {
-      requestStopEarly(sharedWorkingDir, 1)
+      requestStopEarly(SharedWorkingDir, 1)
     }
     tryCatch(
       {

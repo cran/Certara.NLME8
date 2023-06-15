@@ -22,7 +22,6 @@ utils::globalVariables(
     "parallelMethod",
     "partialJob",
     "removeRegistry",
-    "sharedWorkingDir",
     "requiredargs"
   )
 )

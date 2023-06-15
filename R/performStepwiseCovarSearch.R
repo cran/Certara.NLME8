@@ -41,6 +41,7 @@ performStepwiseCovarSearch <-
       check_Arguments(requiredargs, args, "performStepwiseCovarSearch")
     }
 
+    rm(list = ls(envir = nlmeEnv), envir = nlmeEnv)
     assign("reportProgress", reportProgress, envir = nlmeEnv)
 
     tryCatch({

@@ -1,5 +1,5 @@
 Package: Certara.NLME8
-Version: 1.2.3
+Version: 1.2.4
 Title: Utilities for Certara's Nonlinear Mixed-Effects Modeling Engine
 Authors@R: c(
       person("Soltanshahi", "Fred", email = "fred.soltanshahi@certara.com", role = c("aut")),
@@ -24,7 +24,7 @@ Suggests: testthat
 Imports: xml2, batchtools (>= 0.9.9), reshape, utils, data.table
 Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2023-05-17 20:45:14 UTC; jcraig
+Packaged: 2023-06-15 19:27:40 UTC; jcraig
 Author: Soltanshahi Fred [aut],
   Michael Tomashevskiy [aut],
   James Craig [aut, cre],
@@ -32,4 +32,4 @@ Author: Soltanshahi Fred [aut],
   Certara USA, Inc. [cph, fnd]
 Maintainer: James Craig <james.craig@certara.com>
 Repository: CRAN
-Date/Publication: 2023-05-18 08:30:06 UTC
+Date/Publication: 2023-06-15 20:00:12 UTC

@@ -138,7 +138,7 @@ startGenericGridJob <-
         if (num_samples == 1) {
           # drop a file to force NLME to quit
           jobId <- 1
-          requestStopEarly(sharedWorkingDir, jobId)
+          requestStopEarly(SharedWorkingDir, jobId)
         } else {
           done <- grabDoneReplicates(status)
           break
@@ -321,7 +321,7 @@ startGenericGridJob <-
                     append = TRUE
                   )
 
-                  requestStopEarly(sharedWorkingDir, jobId)
+                  requestStopEarly(SharedWorkingDir, jobId)
                 }
               }
             }

@@ -301,10 +301,10 @@ checkLicenseFile <-
   }
 
 checkMPIWindows <- function() {
-  PhoenixMSMPIDir <-
-    gsub("\\", "/", Sys.getenv("PhoenixMSMPIDir"), fixed = TRUE)
+  PhoenixMPIDir64 <-
+    gsub("\\", "/", Sys.getenv("PhoenixMPIDir64"), fixed = TRUE)
 
-  if (PhoenixMSMPIDir == "") {
+  if (PhoenixMPIDir64 == "") {
     warning(
       "MPI directory not set. Cannot execute the job using host with MPI enabled.",
       immediate. = TRUE
@@ -313,12 +313,12 @@ checkMPIWindows <- function() {
   }
 
   req_files <-
-    file.path(PhoenixMSMPIDir, "bin", c("mpiexec.exe", "smpd.exe"))
+    file.path(PhoenixMPIDir64, "bin", c("mpiexec.exe", "smpd.exe"))
 
   res <- file.exists(req_files)
   if (any(!res)) {
     warning(
-      "Please check if PhoenixMSMPIDir env.variable is addressing to \n",
+      "Please check if PhoenixMPIDir64 env.variable is addressing to \n",
       paste(req_files[!res], collapse = "\n"),
       immediate. = TRUE
     )

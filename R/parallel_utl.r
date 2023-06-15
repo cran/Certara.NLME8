@@ -221,7 +221,7 @@ figureOutMpiNumCoresForPop <-
     return(num_cores)
   }
 
-requestStopEarly <- function(sharedWorkingDir, jobId) {
+requestStopEarly <- function(SharedWorkingDir, jobId) {
   baseJobDirectory <- getBatchDirectoryLocation(SharedWorkingDir)
   jobId <- 1
   baseIndx <- jobId

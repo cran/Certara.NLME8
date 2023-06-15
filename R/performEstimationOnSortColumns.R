@@ -48,6 +48,9 @@ performEstimationOnSortColumns <-
     dir.create(localWorkingDir,
                showWarnings = FALSE,
                recursive = TRUE)
+
+    rm(list = ls(envir = nlmeEnv), envir = nlmeEnv)
+    assign("reportProgress", reportProgress, envir = nlmeEnv)
     updateInitialStatus("SortByColumn", parallelMethod, localWorkingDir)
 
     tryCatch({
