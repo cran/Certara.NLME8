@@ -1,6 +1,7 @@
 
 
 
+
 generateEtaEtaTable <-
   function(jobList,
            unique_sorted_values,
@@ -62,27 +63,27 @@ generateVIFParDerTables <-
            unique_sorted_values,
            scenarioNames,
            localWorkingDir) {
-      generateGenericTable(
-        jobList,
-        unique_sorted_values,
-        scenarioNames,
-        "ParDer.csv",
-        file.path(localWorkingDir, "ParDer.csv"),
-        c(
-          "id1",
-          "id2",
-          "id3",
-          "id4",
-          "id5",
-          "WhichReset",
-          "Time",
-          "IPred",
-          "Deriv",
-          "PredName",
-          "ObsName",
-          "Parameter"
-        )
+    generateGenericTable(
+      jobList,
+      unique_sorted_values,
+      scenarioNames,
+      "ParDer.csv",
+      file.path(localWorkingDir, "ParDer.csv"),
+      c(
+        "id1",
+        "id2",
+        "id3",
+        "id4",
+        "id5",
+        "WhichReset",
+        "Time",
+        "IPred",
+        "Deriv",
+        "PredName",
+        "ObsName",
+        "Parameter"
       )
+    )
   }
 
 generateGenericTable <- function(jobList,
@@ -126,7 +127,7 @@ generateGenericTable <- function(jobList,
       dataf <- data.table::fread(fileToRead, header = FALSE)
       if (all(as.character(dataf[1, 1:5]) == c("id1", "id2", "id3", "id4", "id5"))) {
         # doses data frame has header
-        dataf <- dataf[-1, ]
+        dataf <- dataf[-1,]
       }
       colnames(dataf) <- colNames[1:ncol(dataf)]
 
@@ -164,8 +165,7 @@ generateGenericTable <- function(jobList,
       }
 
       if (first == TRUE) {
-        cols1Path <- file.path(dirname(fileToRead), "cols1.txt")
-        cols1Text <- readLines(cols1Path)
+        cols1Text <- .get_cols1Text(DirectoryToRead = dirname(fileToRead))
       }
 
       dataf <- .rename_IDs(cols1Text, dataf)

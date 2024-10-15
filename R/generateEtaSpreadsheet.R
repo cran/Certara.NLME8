@@ -90,12 +90,14 @@ generateEtaSpreadsheet <-
                                                  colnames(dmp.txt$omega),
                                                  currentEta.csv)
 
+          cols1Text <- .get_cols1Text(dirname(rDumpFile))
+
           currentEtaStacked.csv <-
-            .rename_IDs(dmp.txt$cols1.txt, currentEtaStacked.csv)
+            .rename_IDs(cols1Text, currentEtaStacked.csv)
           currentEta.csv <-
-            .rename_IDs(dmp.txt$cols1.txt, currentEta.csv)
+            .rename_IDs(cols1Text, currentEta.csv)
           currentbluptable.dat <-
-            .rename_IDs(dmp.txt$cols1.txt, currentbluptable.dat)
+            .rename_IDs(cols1Text, currentbluptable.dat)
 
         }
 
@@ -191,4 +193,16 @@ generateEtaSpreadsheet <-
   }
 
   dmp.txt
+}
+
+.get_outtxt <- function(outFile) {
+  out.txtCached <- paste0("out.txt[[", outFile, "]]")
+  if (exists(out.txtCached, envir = nlmeEnv)) {
+    out.txt <- get(out.txtCached, envir = nlmeEnv)
+  } else {
+    out.txt <- readLines(outFile, warn = FALSE)
+    assign(out.txtCached, out.txt, envir = nlmeEnv)
+  }
+
+  out.txt
 }

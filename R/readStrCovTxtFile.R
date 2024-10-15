@@ -55,9 +55,9 @@ readStrCovTxtFile <-
         colnames(StrCov) <-
           c(IDs, "StrName", "CovrName", "Str", "Covr")
         data.table::setcolorder(StrCov, c(IDs, "CovrName", "StrName", "Covr", "Str"))
-        dmp.txt <- .get_dmptxt(rDumpFile)
 
-        StrCov <- .rename_IDs(dmp.txt$cols1.txt, StrCov)
+        cols1Text <- .get_cols1Text(dirname(rDumpFile))
+        StrCov <- .rename_IDs(cols1Text, StrCov)
 
         # Add scenario name
         SortScenarioDF <- .get_SortsScenarioDF(job)

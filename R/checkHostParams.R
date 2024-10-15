@@ -6,15 +6,11 @@ checkLinuxGCC <- function() {
       fixed = TRUE
     ))
   if (as.numeric(gcc_out[1]) > 8) {
-    message(
-      "gcc version was found on the system: ",
-      paste0(gcc_out, collapse = ".")
-    )
+    message("gcc version was found on the system: ",
+            paste0(gcc_out, collapse = "."))
   } else if (as.numeric(gcc_out[1]) < 8) {
-    message(
-      "\n gcc version was found on the system: ",
-      paste0(gcc_out, collapse = ".")
-    )
+    message("\n gcc version was found on the system: ",
+            paste0(gcc_out, collapse = "."))
   }
 
   return(TRUE)
@@ -29,24 +25,31 @@ checkWindowsGCC <- function() {
     if (file.exists(file.path(NLMEGCCDir64, "gcc.exe"))) {
       Sys.setenv("NLMEGCCDir64" = dirname(NLMEGCCDir64))
     } else {
-      # trying to find gcc
-      suppressWarnings(GCCLocation <- system2(
-        "where",
-        args = "gcc.exe",
-        stdout = TRUE,
-        stderr = TRUE
-      )[1])
+      PhoenixGCCDir64 <-
+        gsub("\\", "/", Sys.getenv("PhoenixGCCDir64"), fixed = TRUE)
 
-      if (!file.exists(GCCLocation)) {
-        warning(
-          "gcc was not found. ",
-          "Please check if NLMEGCCDir64 env.variable is addressing to gcc",
-          immediate. = TRUE
-        )
-        return(FALSE)
+      if (file.exists(file.path(PhoenixGCCDir64, "bin", "gcc.exe"))) {
+        Sys.setenv("NLMEGCCDir64" = PhoenixGCCDir64)
+      } else {
+        # trying to find gcc
+        suppressWarnings(GCCLocation <- system2(
+          "where",
+          args = "gcc.exe",
+          stdout = TRUE,
+          stderr = TRUE
+        )[1])
+
+        if (!file.exists(GCCLocation)) {
+          warning(
+            "gcc was not found. ",
+            "Please check if NLMEGCCDir64 env.variable is addressing to gcc",
+            immediate. = TRUE
+          )
+          return(FALSE)
+        }
+
+        Sys.setenv("NLMEGCCDir64" = dirname(dirname(GCCLocation)))
       }
-
-      Sys.setenv("NLMEGCCDir64" = dirname(dirname(GCCLocation)))
     }
 
     NLMEGCCDir64 <-
@@ -104,15 +107,24 @@ checkGCC <- function(OS.type = .Platform$OS.type) {
 #' @export
 checkInstallDir <- function(installDir) {
   if (.Platform$OS.type == "unix") {
-    req_files <- c(
-      "execNLMECmd.sh",
+    PML_BIN_DIR <- Sys.getenv("PML_BIN_DIR")
+    reqLibsExecs <- c(
       "TDL5",
       "libNLME7_linux.a",
       "libNLME7_FORT_linux.a",
       "libMPI_STUB_linux.a",
       "libLAPACK_linux.a",
-      "libBLAS_linux.a"
+      "libBLAS_linux.a",
+      "libcrlibm_linux.a",
+      "libcadlicensingclient.so.0.1.0",
+      "cadlicensingtool"
     )
+
+    reqScripts <- c("execNLMECmd.sh")
+
+    req_files <-
+      c(file.path(PML_BIN_DIR, reqLibsExecs),
+        reqScripts)
   } else {
     req_files <- c(
       "execNLMECmd.ps1",
@@ -121,7 +133,10 @@ checkInstallDir <- function(installDir) {
       "libNLME7_FORT.a",
       "libMPI_STUB.a",
       "libLAPACK.a",
-      "libBLAS.a"
+      "libBLAS.a",
+      "libcrlibm.a",
+      "cadlicensingtool.exe",
+      "cadlicensingclient.dll"
     )
   }
 
@@ -142,10 +157,16 @@ checkInstallDir <- function(installDir) {
   }
 
   if (.Platform$OS.type == "unix") {
-    Sys.chmod(file.path(installDir, c("TDL5", "execNLMECmd.sh"), "+x"))
+    Sys.chmod(file.path(installDir,
+                        c(
+                          file.path(PML_BIN_DIR, "TDL5"),
+                          "execNLMECmd.sh"
+                        )),
+              mode = "0777",
+              use_umask = TRUE)
   }
 
-  return(TRUE)
+  TRUE
 }
 
 #' Check NLME ROOT DIRECTORY for the given local host
@@ -169,13 +190,11 @@ checkRootDir <- function(obj) {
 
   if (rootDir == "") {
     warning("Shared execution directory is not set for this host",
-      immediate. = TRUE
-    )
+            immediate. = TRUE)
     return(FALSE)
   } else if (file.access(rootDir, 2) == -1) {
     warning("Shared execution directory is not accessible for writing",
-      immediate. = TRUE
-    )
+            immediate. = TRUE)
     return(FALSE)
   }
   return(TRUE)
@@ -183,61 +202,30 @@ checkRootDir <- function(obj) {
 
 #' Checks if NLME run is licensed
 #'
-#' Checks if valid license file is available for NLME run.
+#' Checks if valid license is available for NLME run.
 #'
-#' @param installDir Directory with NLME executables as specified in \code{INSTALLDIR} environment variable.
-#' @param licenseFile Path to the license file. If not given, and Gemalto License
-#' server is not active, NLME will try to look for it in \code{installationDirectory},
-#' and in Phoenix installation directory.
-#' @param verbose Flag to output warnings if issues are found.
+#' @param installDir Directory with NLME executables as specified in
+#'   `INSTALLDIR` environment variable.
+#' @param verbose Flag to output all messages during authorization and
+#'   licensing. Default is `FALSE`.
+#' @param outputGenericInfo Flag to provide TDL5 output when no issues found.
+#'   Default is `TRUE`.
 #'
-#' @return \code{TRUE} if all checks are successful, otherwise \code{FALSE}.
+#' @return `TRUE` if all checks are successful, otherwise `FALSE`.
 #'
 #' @examples
 #' \dontrun{
-#' checkLicenseFile(Sys.getenv("INSTALLDIR"), FALSE)
+#' checkLicenseFile(Sys.getenv("INSTALLDIR"),
+#'                  verbose = TRUE)
 #' }
 #'
 #' @export
 checkLicenseFile <-
   function(installDir,
-           licenseFile = "",
-           verbose = FALSE) {
+           verbose = FALSE,
+           outputGenericInfo = TRUE) {
     stopifnot(checkInstallDir(installDir))
-    PhoenixLicenseServerEnvFound <-
-      Sys.getenv("PhoenixLicenseServer") != ""
-    if (licenseFile != "") {
-      if (!file.exists(licenseFile)) {
-        warning("Specified license file was not found.")
-        return(FALSE)
-      } else {
-        Sys.setenv(PhoenixLicenseFile = licenseFile)
-      }
-    }
-
-    PhoenixLicenseFileEnvFound <-
-      file.exists(Sys.getenv("PhoenixLicenseFile"))
-
-    InstallDirLicenseFileFound <-
-      file.exists(file.path(installDir, "lservrc"))
-    PhoenixLicenseEnvFound <-
-      file.exists(file.path(
-        Sys.getenv("PhoenixDir"),
-        "application\\Services\\Licensing\\lservrc"
-      ))
     NLME_HASH <- Sys.getenv("NLME_HASH")
-    if (!PhoenixLicenseFileEnvFound &&
-      !PhoenixLicenseServerEnvFound &&
-      !PhoenixLicenseEnvFound &&
-      !InstallDirLicenseFileFound &&
-      NLME_HASH == "") {
-      warning("License server is not specified.\n",
-        "lservrc file not found.",
-        immediate. = TRUE
-      )
-
-      return(FALSE)
-    }
 
     if (verbose) {
       if (NLME_HASH != "") {
@@ -246,96 +234,170 @@ checkLicenseFile <-
           "\nLicense will be checked only if HASH check fails."
         )
       }
-      if (PhoenixLicenseServerEnvFound) {
-        message(
-          "Phoenix License Server Environment variable PhoenixLicenseServer found and will be checked."
-        )
-      } else if (PhoenixLicenseFileEnvFound) {
-        message(
-          "Phoenix License file Environment variable PhoenixLicenseFile found and will be checked."
-        )
-      } else if (InstallDirLicenseFileFound) {
-        message("Phoenix License file found in installDir and will be checked.")
-      } else if (PhoenixLicenseEnvFound) {
-        message("License file in Phoenix licensing directory found and will be checked.")
-      }
     }
 
     errorMsg <- ""
     TDL5Executable <-
-      ifelse(.Platform$OS.type == "unix", "TDL5", "TDL5.exe")
+      ifelse(.Platform$OS.type == "unix",
+             file.path(Sys.getenv("PML_BIN_DIR"), "TDL5"),
+             "TDL5.exe")
 
-    if (NLME_HASH == "") {
+    if (NLME_HASH != "") {
+      # NLME_HASH is provided; we cannot use license_check then
+      suppressWarnings(errorMsg <-
+                         system2(
+                           file.path(installDir, TDL5Executable),
+                           args = paste("-v -hash", NLME_HASH, "-l 1"),
+                           stdout = TRUE,
+                           stderr = TRUE
+                         ))
+
+      if (any(grepl("TDL5: Startup error: deltaTime", errorMsg, fixed = TRUE))) {
+        warning(
+          "Cannot execute TDL5 using NLME_HASH provided: ",
+          NLME_HASH,
+          "\n",
+          "TDL5 output:\n",
+          paste(errorMsg, collapse = "\n"),
+          immediate. = TRUE
+        )
+        # license could be still OK
+
+      } else if (any(grepl("unable to open file '1'", errorMsg, fixed = TRUE))) {
+        # NLME_HASH is valid since it goes to check fake 1 file
+        # Note that in different versions the message is a bit different
+
+        return(TRUE)
+      } else {
+        warning("NLME_HASH env.variable provided does not point to the valid code.")
+        return(FALSE)
+      }
+    } else {
+      if (verbose) {
+        message("NLME_HASH not found; performing license authorization check.")
+      }
+
       suppressWarnings(
         errorMsg <-
           system2(
             path.expand(file.path(installDir, TDL5Executable)),
-            args = "-license_check",
+            args = "-v -license_check",
             stdout = TRUE,
             stderr = TRUE
           )
       )
-    } else {
-      suppressWarnings(errorMsg <-
-        system2(
-          file.path(installDir, TDL5Executable),
-          args = paste("-hash", NLME_HASH, "-l 1"),
-          stdout = TRUE,
-          stderr = TRUE
-        ))
     }
 
-    if (!any(grepl("(Using license)|(Unable to open file)", errorMsg))) {
+    CADConnection <- any(grepl("Status: OK", errorMsg))
+    NoCADConnection <- any(grepl("Status: Disconnected", errorMsg))
+    ValidLicense <-
+      CADConnection ||
+      NoCADConnection ||
+      (length(errorMsg) == 1 &&
+         grepl("TDL5 version\\:\\W\\d+\\.\\d+\\.\\d+", errorMsg))
+
+    if (verbose ||
+        !ValidLicense ||
+        (ValidLicense && outputGenericInfo)) {
+      message(paste(errorMsg, collapse = "\n"))
+    }
+
+    if (!ValidLicense) {
       warning(
-        "Cannot execute TDL5 using license provided.\n",
-        "TDL5 output:\n",
-        paste(errorMsg, collapse = "\n"),
-        immediate. = TRUE
+        paste(
+          "No license found or cannot execute TDL5 using license provided.\n",
+          "Please try to reauthenticate. If you are still having issues, contact Certara support."
+        ),
+        immediate. = TRUE,
+        call. = FALSE
       )
-      return(FALSE)
-    } else if (any(grepl("Using license.+_Academic_", errorMsg))) {
-      message("\nNLME academic license used.")
     }
 
-    return(TRUE)
+    if (NoCADConnection) {
+      if (verbose) {
+        message("Offline mode.")
+        tryCatch({
+          RefreshLine <- errorMsg[grepl("Refresh until: ", errorMsg)]
+          if (length(RefreshLine) == 0) {
+            warning(paste(
+              "Cannot obtain information for refresh token in TDL5 output:\n",
+              errorMsg
+            ))
+            return(ValidLicense)
+          }
+
+          # the third is the date
+          RefreshLineDateString <-
+            strsplit(RefreshLine, " ")[[1]][3]
+          if (Sys.Date() + 7 > as.Date(RefreshLineDateString, "%Y-%m-%d")) {
+            message(
+              "Using in offline mode. Number of days before online reconnection is required: ",
+              as.Date(RefreshLineDateString, "%Y-%m-%d") - Sys.Date()
+            )
+          }
+        },
+        error = function(cond)
+          warning(
+            paste(
+              "Cannot obtain information for refresh token in TDL5 output:\n",
+              errorMsg,
+              "\nThe error reported:\n",
+              conditionMessage(cond)
+            )
+          ),
+        warning = function(cond)
+          warning(
+            paste(
+              "Cannot obtain information for refresh token in TDL5 output:\n",
+              errorMsg,
+              "\nThe warning reported:\n",
+              conditionMessage(cond)
+            )
+          ))
+
+      }
+    }
+
+    ValidLicense
   }
+
 
 checkMPIWindows <- function() {
   PhoenixMPIDir64 <-
-    gsub("\\", "/", Sys.getenv("PhoenixMPIDir64"), fixed = TRUE)
+    gsub("\\", "/", Sys.getenv("PhoenixMSMPIDir"), fixed = TRUE)
+
 
   if (PhoenixMPIDir64 == "") {
-    warning(
-      "MPI directory not set. Cannot execute the job using host with MPI enabled.",
-      immediate. = TRUE
-    )
+    warning("MPI directory not set. Cannot execute the job using host with MPI enabled.")
     return(FALSE)
   }
 
   req_files <-
-    file.path(PhoenixMPIDir64, "bin", c("mpiexec.exe", "smpd.exe"))
-
+    file.path(PhoenixMPIDir64,
+              c("mpiexec.exe", "smpd.exe"))
   res <- file.exists(req_files)
   if (any(!res)) {
     warning(
-      "Please check if PhoenixMPIDir64 env.variable is addressing to \n",
-      paste(req_files[!res], collapse = "\n"),
-      immediate. = TRUE
+      paste(
+        "Please check if PhoenixMPIDir64 env.variable is addressing to",
+        req_files[!res],
+        collapse = "\n",
+        sep = "\n"
+      )
     )
-    return(FALSE)
+
+    FALSE
   }
 
-  return(TRUE)
+  TRUE
 }
 
 checkMPILinux <- function() {
   PhoenixMPIDir64 <- Sys.getenv("PhoenixMPIDir64")
 
   if (PhoenixMPIDir64 == "") {
-    warning(
-      "MPI directory not set. Cannot execute the job using host with MPI enabled.",
-      immediate. = TRUE
-    )
+    warning("MPI directory not set. Cannot execute the job using host with MPI enabled.")
+
     return(FALSE)
   }
 
@@ -345,14 +407,18 @@ checkMPILinux <- function() {
   res <- file.exists(req_files)
   if (any(!res)) {
     warning(
-      "Please check if PhoenixMPIDir64 env.variable is addressing to \n",
-      paste(req_files[!res], collapse = "\n"),
-      immediate. = TRUE
+      paste(
+        "Please check if PhoenixMPIDir64 env.variable is addressing to",
+        req_files[!res],
+        collapse = "\n",
+        sep = "\n"
+      )
     )
-    return(FALSE)
+
+    FALSE
   }
 
-  return(TRUE)
+  TRUE
 }
 
 #' Check MPI settings for the given local host
@@ -373,13 +439,14 @@ checkMPILinux <- function() {
 #'
 #' @export
 checkMPISettings <- function(obj) {
-  if (grepl(".*MPI$", obj@parallelMethod@method, ignore.case = TRUE)) {
+  if (obj@isLocal &&
+      grepl(".*MPI$", obj@parallelMethod@method, ignore.case = TRUE)) {
     if (.Platform$OS.type == "windows") {
       return(checkMPIWindows())
     } else {
       return(checkMPILinux())
     }
-  } else {
-    return(TRUE)
   }
+
+  TRUE
 }

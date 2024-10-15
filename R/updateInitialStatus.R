@@ -6,7 +6,7 @@ updateInitialStatus <- function(runMode = "", parallelMethod = "", localWorkingD
   progress$StartTime <- getLocalTimeUTC()
   assign("ProgressStatus", progress, envir = nlmeEnv)
 
-  GlobalSummaryLine1 <- sprintf("Preparing files for %s run", runMode)
+  GlobalSummaryLine1 <- sprintf("Preparing files for %s run\n", runMode)
   assign("GlobalSummaryLine1", GlobalSummaryLine1, envir = nlmeEnv)
   GlobalSummaryLine2 <- ""
   assign("GlobalSummaryLine2", GlobalSummaryLine2, envir = nlmeEnv)

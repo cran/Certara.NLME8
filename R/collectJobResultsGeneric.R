@@ -151,6 +151,17 @@ collectJobResultsGeneric <-
         )
       }
     }
+
+    if (.Platform$OS.type == "unix" && Sys.getenv("NLME_HASH") != "") {
+      # need to change EOL to Windows format if started from Phoenix
+      for (fileName in filesTo) {
+        txt <- readLines(fileName)
+        con <- file(fileName, open="wb")
+        writeLines(txt, con, sep="\r\n")
+        close(con)
+      }
+
+    }
   }
 
 .get_scenarioName <- function(job) {

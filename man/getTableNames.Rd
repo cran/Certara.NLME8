@@ -4,24 +4,29 @@
 \alias{getTableNames}
 \title{Table names from the column definition file}
 \usage{
-getTableNames(columnDefinitionFilename, simtbl = FALSE)
+getTableNames(columnDefinitionFilename, columnDefinitionText, simtbl = FALSE)
 }
 \arguments{
-\item{columnDefinitionFilename}{path to NLME column definition file}
+\item{columnDefinitionFilename}{path to NLME column definition file to be
+read}
 
-\item{simtbl}{logical. \code{TRUE} extracts simulation tables,
-\code{FALSE} extracts simple tables.}
+\item{columnDefinitionText}{Lines of column definition file to be used (only
+if \code{columnDefinitionFilename} is not given or \code{NULL}).}
+
+\item{simtbl}{logical. \code{TRUE} extracts simulation tables, \code{FALSE} extracts
+simple tables.}
 }
 \value{
-vector of names of the tables in column definition file if any,
-empty string otherwise
+vector of names of the tables in column definition file if any, empty
+string otherwise
 }
 \description{
 Extracts table names from the column definition file
 }
 \examples{
 \dontrun{
-getTableNames("cols1.txt", simtbl = TRUE)
+  getTableNames(columnDefinitionFilename = "cols1.txt",
+                simtbl = TRUE)
 }
 
 }

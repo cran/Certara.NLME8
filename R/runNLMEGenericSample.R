@@ -17,11 +17,13 @@ runNLMEGenericSample <- function(jobIndx, SharedWorkingDir = "") {
     extraArgsFile <-
       sprintf("%s.%s", extraArgsFile, extraArgsFileIndx)
     idx <- as.integer(extraArgsFileIndx)
+    CommentedLines <- grepl("^\\W*#", lines)
+    lines <- lines[!CommentedLines]
     numLines <- length(lines)
     # Due to these records not all being used in one run, we need a different
     # method to find num lines
     #  numLinesPerRecord=numLines/num_samples
-    numLinesPerRecord <- numLines / length(grep("-anagrad", lines))
+    numLinesPerRecord <- numLines / length(grep("-rtol", lines))
     appendFlag <- FALSE
     for (i in 1:numLinesPerRecord) {
       cat_filesWarnLong(lines[(idx - 1) * numLinesPerRecord + i],

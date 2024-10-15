@@ -62,7 +62,6 @@ performProfileEstimation <- function(args, reportProgress = FALSE) {
     #
 
     numDatasets <- sortByColumnAndGenerateControlFile(
-      "data1.txt",
       numColumns,
       columnNamesArray,
       nlmeArgsFilename,

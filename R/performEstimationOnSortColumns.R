@@ -60,7 +60,6 @@ performEstimationOnSortColumns <-
       assign("profileDescriptors", "", envir = nlmeEnv)
       jobType <- "ESTIMATION_RUN"
       numDatasets <- sortByColumnAndGenerateControlFile(
-        "data1.txt",
         numColumns,
         columnNamesArray,
         nlmeArgsFilename,

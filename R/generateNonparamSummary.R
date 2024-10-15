@@ -25,17 +25,6 @@ generateNonparamSummary <-
     missingFile <- TRUE
 
     for (job in jobList) {
-      if (first) {
-        # used for cols1.txt
-        rDumpFile <-
-          figureOutDmpFileLocation(
-            job,
-            jobsBaseDirectory
-          )
-
-        dmp.txt <- .get_dmptxt(rDumpFile)
-      }
-
       jobBaseIndx <- job %% 100
       nparsupportFileFull <-
         sprintf("%s/jobs/%02d/%d/%s",
@@ -142,7 +131,8 @@ generateNonparamSummary <-
         NonParStacked <- rbind.data.frame(NonParStacked, stacked)
       }
 
-      etameansnp <- .rename_IDs(dmp.txt$cols1.txt, etameansnp)
+      cols1Text <- .get_cols1Text(dirname(IdEtaFileFull))
+      etameansnp <- .rename_IDs(cols1Text, etameansnp)
 
       # Add the scenario name
       SortScenarioDF <- .get_SortsScenarioDF(job)

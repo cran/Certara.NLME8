@@ -104,9 +104,9 @@ readEtaCovTxtFile <-
           EtaCovariate$NPEta <- NA
         }
 
-        cols1Text <- dmp.txt$cols1.txt
-        EtaCovariate <- .rename_IDs(dmp.txt$cols1.txt, EtaCovariate)
-        EtaCov <- .rename_IDs(dmp.txt$cols1.txt, EtaCov)
+        cols1Text <- .get_cols1Text(dirname(EtaCovFileFull))
+        EtaCovariate <- .rename_IDs(cols1Text, EtaCovariate)
+        EtaCov <- .rename_IDs(cols1Text, EtaCov)
 
         # Add the scenario name
         SortScenarioDF <- .get_SortsScenarioDF(job)

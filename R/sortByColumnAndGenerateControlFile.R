@@ -4,17 +4,25 @@
 #
 #
 sortByColumnAndGenerateControlFile <-
-  function(inputFilename,
-           numColumns,
+  function(numColumns,
            columnNamesArray,
            argsFile,
            controlFilename,
            jobType) {
+    localWorkingDir <- get("localWorkingDir", envir = nlmeEnv)
+    if (dirname(argsFile) == ".") {
+      argsFile <- file.path(localWorkingDir, argsFile)
+    }
+
+    # figure out data file and column definition file
+    argsFileLines <- readLines(argsFile)
+    datacolsFileNames <- .get_InputDataFileNames(argsFileLines)
+    inputFileName <- datacolsFileNames$inputFileName
+    cols1FileName <- datacolsFileNames$cols1FileName
+
     numRuns <- 0
 
-    localWorkingDir <- get("localWorkingDir", envir = nlmeEnv)
-
-    # NLME combined arugments file
+    # NLME combined arguments file
     combinedArgsFilename <- sprintf("%s_combined_args.txt",
                                     strsplit(basename(controlFilename), "[.]")[[1]][1])
 
@@ -22,11 +30,18 @@ sortByColumnAndGenerateControlFile <-
       file.path(localWorkingDir, combinedArgsFilename)
     # Split the data set into multiple ones
     data <-
-      data.table::fread(
-        file.path(localWorkingDir, inputFilename),
-        check.names = FALSE,
-        fill = TRUE
+      read.csv(
+        file.path(localWorkingDir, inputFileName),
+        check.names = FALSE
       )
+
+    if (grepl("^#@", data[1,1])) {
+      # extract units and add later
+      unitsRow <- data[1,]
+      data <- data[-c(1),]
+    } else {
+      unitsRow <- data.frame()
+    }
 
     cn <- colnames(data)
     cn[1] <- gsub("^##", "", cn[1], fixed = FALSE)
@@ -42,12 +57,6 @@ sortByColumnAndGenerateControlFile <-
     } else {
       data2 <- NULL
     }
-
-    if (dirname(argsFile) == ".") {
-      argsFile <- file.path(localWorkingDir, argsFile)
-    }
-
-    argsFileLines <- readLines(argsFile)
 
     if (numColumns == 0) {
       # No sort columns
@@ -110,7 +119,7 @@ sortByColumnAndGenerateControlFile <-
         for (t in unlist(tokens)) {
           row <- c(row, t)
         }
-        unique_sorted_values[r, ] <- row
+        unique_sorted_values[r,] <- row
       }
 
       if (length(data2) != 0) {
@@ -156,7 +165,7 @@ sortByColumnAndGenerateControlFile <-
     tokens <- unlist(strsplit(argsFileLines[5], ","))
     if (numSortDatasets != 1) {
       for (indx in 1:numSortDatasets) {
-        inputFile <- sprintf(" %s.%d ", inputFilename, indx)
+        inputFile <- sprintf(" %s.%d ", inputFileName, indx)
         cat(inputFile,
             file = controlFilename,
             sep = " ",
@@ -207,8 +216,14 @@ sortByColumnAndGenerateControlFile <-
     nxtSeq <- 1
     outfileSeq <- 1
     flag <- FALSE
+
     posthocTables <-
-      getTableNames(paste0(localWorkingDir, "/cols1.txt"))
+      getTableNames(
+        columnDefinitionFilename = file.path(localWorkingDir, cols1FileName),
+        columnDefinitionText = NULL,
+        simtbl = FALSE
+      )
+
     for (indx in 1:numSortDatasets) {
       for (scenario in 1:numScenarios) {
         for (prof in 1:numProfileVariables) {
@@ -229,7 +244,10 @@ sortByColumnAndGenerateControlFile <-
             # Lets make sure that we replace data2.txt with data2.txt.i , etc
             argsLine <- nlmearguments[i]
             if (length(data2) > 0 && numSortDatasets > 1) {
-              argsLine <- gsub("data2\\.txt", sprintf("data2.txt.%d ", indx), argsLine)
+              argsLine <-
+                gsub("data2\\.txt",
+                     sprintf("data2.txt.%d ", indx),
+                     argsLine)
             }
 
             cat_filesWarnLong(argsLine,
@@ -271,7 +289,7 @@ sortByColumnAndGenerateControlFile <-
               append = TRUE)
           if (numSortDatasets > 1) {
             filename <-
-              sprintf("%s/%s.%d", localWorkingDir, inputFilename, indx)
+              sprintf("%s/%s.%d", localWorkingDir, inputFileName, indx)
             if (length(data2) != 0) {
               filename2 <- sprintf("%s/%s.%d", localWorkingDir, fName2, indx)
             }
@@ -282,11 +300,17 @@ sortByColumnAndGenerateControlFile <-
             }
 
             colnames(outTables[[indx]]) <- names
+            if (length(unitsRow) > 0) {
+              outTables[[indx]] <-
+                rbind.data.frame(unitsRow, outTables[[indx]], make.row.names = FALSE)
+            }
+
             write.csv(
               outTables[[indx]],
               file = filename,
               row.names = FALSE,
-              quote = FALSE
+              quote = FALSE,
+              na = ""
             )
 
             if (length(data2) != 0) {
@@ -305,7 +329,7 @@ sortByColumnAndGenerateControlFile <-
             }
           } else {
             filename <-
-              sprintf(file.path(localWorkingDir, inputFilename))
+              sprintf(file.path(localWorkingDir, inputFileName))
           }
 
           overwrite <- TRUE
@@ -313,7 +337,7 @@ sortByColumnAndGenerateControlFile <-
           cat(
             paste(
               " -d1",
-              "cols1.txt",
+              cols1FileName,
               basename(filename),
               "-out_file",
               outputFilename
@@ -329,3 +353,53 @@ sortByColumnAndGenerateControlFile <-
     }
     return(numSimulationRuns)
   }
+
+.get_InputDataFileNames <- function(argsFileLines) {
+  if (all(exists("inputFileName", envir = nlmeEnv),
+          exists("cols1FileName", envir = nlmeEnv))) {
+    return(list(inputFileName = get("inputFileName", envir = nlmeEnv),
+                cols1FileName = get("cols1FileName", envir = nlmeEnv)))
+  }
+
+  filesToCopyInitial <- strsplit(argsFileLines[2], " ")[[1]]
+  # removing test.mdl and jobargs
+  filesToCopy <-
+    filesToCopyInitial[!filesToCopyInitial %in% argsFileLines[1]]
+  # removing argsCombined
+  filesToCopy <-
+    filesToCopy[!filesToCopy %in% strsplit(argsFileLines[5], split = ",|:")[[1]]]
+  if (length(filesToCopyInitial) != 4 ||
+      length(filesToCopy) != 2 ||
+      all(!is.na(match(
+        filesToCopy, c("data1.txt", "cols1.txt")
+      )))) {
+    # give up; using default names
+    inputFileName <- "data1.txt"
+    cols1FileName <- "cols1.txt"
+  } else {
+    File1 <- file.path(localWorkingDir, filesToCopy[1])
+    File2 <- file.path(localWorkingDir, filesToCopy[2])
+    # a big file is data file; check assignment for a tiny file
+    if (file.info(File1)$size > file.info(File2)$size) {
+      if (any(grepl("<-", readLines(File2), fixed = TRUE))) {
+        inputFileName <- File1
+        cols1FileName <- File2
+      } else {
+        inputFileName <- File2
+        cols1FileName <- File1
+      }
+    } else {
+      # file.info(File1)$size < file.info(File2)$size
+      if (any(grepl("<-", readLines(File1), fixed = TRUE))) {
+        inputFileName <- File2
+        cols1FileName <- File1
+      } else {
+        inputFileName <- File1
+        cols1FileName <- File2
+      }
+    }
+  }
+
+  list(inputFileName = inputFileName,
+       cols1FileName = cols1FileName)
+}

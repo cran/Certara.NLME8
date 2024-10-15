@@ -19,10 +19,10 @@ performParallelNLMERun(
 c(jobType, parallelMethod, install_dir, shared_directory,
 localWorkingDir, controlFile, NumProc, workflow_name, fixefUnits)}
 
-\item{partialJob}{is /code{TRUE} if it is not required to stop the job
+\item{partialJob}{is \code{TRUE} if it is not required to stop the job
 as for covariate stepwise search}
 
-\item{allowIntermediateResults}{is /code{TRUE} if intermediate results
+\item{allowIntermediateResults}{is \code{TRUE} if intermediate results
 are possible like for sorting}
 
 \item{progressStage}{stage of analysis to be reported}

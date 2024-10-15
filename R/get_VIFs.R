@@ -1,57 +1,61 @@
-# getting VIFs produced for NaivePooled engine results
-# from the out file (they are not presented anywhere else)
-.get_VIFs <- function(outfile) {
-  if (!file.exists(outfile)) {
-    return(NULL)
+# parse any structure of consequent rows in the out file
+.parse_OutFileStructure <-
+  function(outfile, ToCapture = "varFixefInf") {
+    if (!file.exists(outfile)) {
+      return("")
+    }
+
+  outText <- .get_outtxt(outfile)
+
+  StructureStart <- grep(paste0("^", ToCapture, "$"), outText)
+
+  if (length(StructureStart) == 0) {
+    return("")
   }
 
-  outText <- readLines(outfile, warn = FALSE)
-  varFixefInfStart <- grep("^varFixefInf$", outText)
-  if (length(varFixefInfStart) == 0) {
-    return(NULL)
-  }
-
-  if (length(varFixefInfStart) > 1) {
+  if (length(StructureStart) > 1) {
     warning(
-      "More than one varFixefInf record was found in \n",
+      paste0("More than one ", ToCapture,
+             " record was found in \n",
       outfile,
       "\nOnly the first occurence will be used."
+      )
     )
-    varFixefInfStart <- varFixefInfStart[1]
+    StructureStart <- StructureStart[1]
   }
 
-  # fixefs are starting at the next row
-  varFixefInfStart <- varFixefInfStart + 1
-  # from VarFixefInfStart to the end of the file
-  outTextStart <- outText[varFixefInfStart:length(outText)]
+  # Structure is starting at the next row
+  StructureStart <- StructureStart + 1
+  # from StructureStart to the end of the file
+  outTextStart <- outText[StructureStart:length(outText)]
   # entities are separated with empty rows
-  varFixefInfLength <- match("", outTextStart) - 1
-  if (is.na(varFixefInfLength) || varFixefInfLength < 1) {
+  StructureLength <- match("", outTextStart) - 1
+  if (is.na(StructureLength) || StructureLength < 1) {
     warning(
       "Current ouptut file was not parsed correctly \n",
       outfile,
-      "\nUnable to read VIFs."
+      "\nUnable to read Structures."
     )
-    return(NULL)
+    return("")
   }
 
-  varFixefList <- strsplit(outTextStart[1:varFixefInfLength], "#")
-  VIFs <- sapply(
-    varFixefList,
-    function(Row) {
-      if (length(Row) < 2) {
-        fixef <- NA
-      } else {
-        fixef <- as.numeric(Row[1])
-        names(fixef) <- trimws(Row[2])
-      }
-      fixef
-    }
+  StructureList <- strsplit(outTextStart[1:StructureLength], "#")
+  suppressWarnings(Structures <- sapply(StructureList,
+                                        function(Row)
+                                          as.numeric(Row[[1]])))
+
+  StructuresNamesUnits <- sapply(
+    StructureList,
+    function(Row) trimws(Row[[2]])
   )
 
-  VIFs <- na.omit(VIFs)
-
-  VIFs
+  # could be units inside
+  StructuresNamesSplit <- strsplit(StructuresNamesUnits, " ")
+  StructuresNames <- sapply(StructuresNamesSplit, function(x) x[[1]])
+  StructuresUnits <- sapply(StructuresNamesSplit, function(x) {ifelse(length(x) > 1, paste(x[2:length(x)]), "")})
+  names(Structures) <- StructuresNames
+  attr(Structures, "units") <- StructuresUnits
+  Structures
 }
 
 # get VIF from VIFObs for individual mode

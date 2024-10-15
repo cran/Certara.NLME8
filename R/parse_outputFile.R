@@ -25,7 +25,7 @@
 }
 
 .get_outputDF <- function(outputFileName) {
-  lines <- readLines(outputFileName)
+  lines <- .get_outtxt(outputFileName)
 
   ReturnCode_line <- grep("^ReturnCode", lines)
   if (length(ReturnCode_line) == 0) {

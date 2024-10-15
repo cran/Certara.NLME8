@@ -199,10 +199,12 @@ runNLMESample <-
       Sys.chmod(list.files(
         path = Sys.getenv("INSTALLDIR"),
         pattern = "*.sh|TDL5$",
-        full.names = TRUE
+        full.names = TRUE,
+        recursive = TRUE
       ),
       mode = "777"
       )
+
       if (indx != 0 &&
         (tolower(parallelMethod) %in% c("multicore", "none", "local_mpi", "mpi"))) {
         system(paste(
@@ -244,22 +246,6 @@ runNLMESample <-
         "\"\"\"\"\"\"",
         exePostfix
       )
-      #
-      # commandString <- sprintf(
-      #   "RUN %s\\%s %s %s %s %s \"\"\"\"\"\" NLME_DIR \"\"\"\"\"\" \"\"\"%s %s %s %s\"\"\" \"\"\"\"\"\" %s",
-      #   gsub("/", "\\", baseDirectory, fixed = TRUE),
-      #   model_file,
-      #   gsub("/", "\\", workingDir, fixed = TRUE),
-      #   MpiArgument,
-      #   MpiLocal,
-      #   MpiNumCores,
-      #   extraArgs,
-      #   extraArgsFile,
-      #   column_def_file,
-      #   data_file,
-      #   outFile,
-      #   exePostfix
-      # )
 
       copy_filesWarnLong(file.path(Sys.getenv("INSTALLDIR"), "NLMESample.ps1"),
         newFilePath,

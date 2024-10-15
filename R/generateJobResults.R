@@ -56,7 +56,7 @@ generateJobResults <-
       UpdateProgressMessages()
     },
     error = function(ex) {
-      warning("\nFailed to generate",
+      warning("\nFailed to generate ",
               jobType,
               " Results. Error is:\n",
               ex,

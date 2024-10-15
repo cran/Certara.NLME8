@@ -50,7 +50,9 @@ summarizeSimpleEstimation <-
       assign("GlobalSummaryLine2", GlobalSummaryLine2, envir = nlmeEnv)
       UpdateProgressMessages()
 
-      return(file.copy(simTablesExist, localWorkingDir))
+      return(file.copy(from = simTablesExist,
+                       to = localWorkingDir,
+                       overwrite = TRUE))
     }
 
     OutFileNames <-
@@ -134,9 +136,8 @@ summarizeSimpleEstimation <-
     }
 
     if (any(grepl(ReturnedFilesPattern, "Secondary.csv"))) {
-      generateSecondary(OutFileNames,
-                        unique_sorted_values,
-                        scenarioNames,
+      generateSecondary(jobList,
+                        OutFileNames,
                         localWorkingDir)
     }
 
@@ -208,7 +209,10 @@ summarizeSimpleEstimation <-
     }
 
     posthocTableNames <-
-      getTableNames(file.path(localWorkingDir, "cols1.txt"))
+      getTableNames(columnDefinitionFilename = NULL,
+                    columnDefinitionText = .get_cols1Text(DirectoryToRead = jobsDirectory[1]),
+                    simtbl = FALSE)
+
     if (posthocTableNames != "") {
       for (name in unlist(strsplit(gsub("^\\s+", "", posthocTableNames), " "))) {
         # the user requested tables, so we do not filter it

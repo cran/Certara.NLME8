@@ -82,60 +82,61 @@ generateProfileSummary <-
 
     UpdateProgressMessages()
     for (fileName in outputFileNames) {
-      if (file.exists(fileName)) {
-        lines <- readLines(fileName)
-        ReturnCode_line <- grep("^ReturnCode", lines)
-        if (length(ReturnCode_line) == 0) {
-          cat(
-            sprintf("%s,,,,,,", scenarioNames[nxtScenario]),
-            file = ProfileFilename,
-            sep = "\n",
-            append = TRUE
-          )
-        } else {
-          returnCode <- as.integer(gsub("^ReturnCode\\s*=\\s*",
-                                        "",
-                                        lines[ReturnCode_line]))
-
-          Column <- "LogLikelihood"
-          logLik <- as.double(gsub(paste0("^", Column, "\\s*=\\s*"),
-                                   "",
-                                   lines[grep(paste0("^", Column), lines)][1]))
-
-
-          sortValues <- ""
-          if (num_sort_columns != 0) {
-            for (c in 1:num_sort_columns) {
-              nam <- sort_column_names[c]
-              val <- unlist(unique_sorted_values[[c]])[nxtSortKey]
-              if (is.na(val)) {
-                val <- unlist(unique_sorted_values[[c]])[nxtSortKey + 1]
-              }
-              val <- sub("^\\s+", "", val)
-              sortValues <- sprintf("%s%s,", sortValues, val)
-            }
-          }
-
-          cat(
-            sprintf(
-              "%s%s,%s,%f,%f,%d,%s,%s",
-              sortValues,
-              scenarioNames[nxtScenario],
-              profileModels[[nxtProfileIndex]]$theta,
-              profileModels[[nxtProfileIndex]]$initialValue,
-              logLik,
-              returnCode,
-              profileModels[[nxtProfileIndex]]$delta,
-              profileModels[[nxtProfileIndex]]$percent
-            ),
-            file = ProfileFilename,
-            sep = "\n",
-            append = TRUE
-          )
-        }
-      } else {
+      if (!file.exists(fileName)) {
         cat(
           sprintf("%s,,,,,,", scenarioNames[nxtScenario]),
+          file = ProfileFilename,
+          sep = "\n",
+          append = TRUE
+        )
+        next
+      }
+
+      lines <- .get_outtxt(fileName)
+      ReturnCode_line <- grep("^ReturnCode", lines)
+      if (length(ReturnCode_line) == 0) {
+        cat(
+          sprintf("%s,,,,,,", scenarioNames[nxtScenario]),
+          file = ProfileFilename,
+          sep = "\n",
+          append = TRUE
+        )
+      } else {
+        returnCode <- as.integer(gsub("^ReturnCode\\s*=\\s*",
+                                      "",
+                                      lines[ReturnCode_line]))
+
+        Column <- "LogLikelihood"
+        logLik <- as.double(gsub(paste0("^", Column, "\\s*=\\s*"),
+                                 "",
+                                 lines[grep(paste0("^", Column), lines)][1]))
+
+
+        sortValues <- ""
+        if (num_sort_columns != 0) {
+          for (c in 1:num_sort_columns) {
+            nam <- sort_column_names[c]
+            val <- unlist(unique_sorted_values[[c]])[nxtSortKey]
+            if (is.na(val)) {
+              val <- unlist(unique_sorted_values[[c]])[nxtSortKey + 1]
+            }
+            val <- sub("^\\s+", "", val)
+            sortValues <- sprintf("%s%s,", sortValues, val)
+          }
+        }
+
+        cat(
+          sprintf(
+            "%s%s,%s,%f,%f,%d,%s,%s",
+            sortValues,
+            scenarioNames[nxtScenario],
+            profileModels[[nxtProfileIndex]]$theta,
+            profileModels[[nxtProfileIndex]]$initialValue,
+            logLik,
+            returnCode,
+            profileModels[[nxtProfileIndex]]$delta,
+            profileModels[[nxtProfileIndex]]$percent
+          ),
           file = ProfileFilename,
           sep = "\n",
           append = TRUE

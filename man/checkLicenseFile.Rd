@@ -4,26 +4,28 @@
 \alias{checkLicenseFile}
 \title{Checks if NLME run is licensed}
 \usage{
-checkLicenseFile(installDir, licenseFile = "", verbose = FALSE)
+checkLicenseFile(installDir, verbose = FALSE, outputGenericInfo = TRUE)
 }
 \arguments{
-\item{installDir}{Directory with NLME executables as specified in \code{INSTALLDIR} environment variable.}
+\item{installDir}{Directory with NLME executables as specified in
+`INSTALLDIR` environment variable.}
 
-\item{licenseFile}{Path to the license file. If not given, and Gemalto License
-server is not active, NLME will try to look for it in \code{installationDirectory},
-and in Phoenix installation directory.}
+\item{verbose}{Flag to output all messages during authorization and
+licensing. Default is `FALSE`.}
 
-\item{verbose}{Flag to output warnings if issues are found.}
+\item{outputGenericInfo}{Flag to provide TDL5 output when no issues found.
+Default is `TRUE`.}
 }
 \value{
-\code{TRUE} if all checks are successful, otherwise \code{FALSE}.
+`TRUE` if all checks are successful, otherwise `FALSE`.
 }
 \description{
-Checks if valid license file is available for NLME run.
+Checks if valid license is available for NLME run.
 }
 \examples{
 \dontrun{
-checkLicenseFile(Sys.getenv("INSTALLDIR"), FALSE)
+checkLicenseFile(Sys.getenv("INSTALLDIR"),
+                 verbose = TRUE)
 }
 
 }

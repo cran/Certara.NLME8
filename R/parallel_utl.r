@@ -369,7 +369,12 @@ shrinkDmpDotTxt <- function(fname) {
   dmpLines <- .remove_dmptxtParts(partName = "posthoc", dmpLines)
   dmpLines <- gsub("(=\\W-*nan)|(=\\W-*1.#IND)", "= NA", dmpLines)
 
-  paste(dmpLines, collapse = '\n')
+  if (Sys.getenv("NLME_HASH") != "") {
+    paste(dmpLines, collapse = '\r\n')
+  } else {
+    paste(dmpLines, collapse = '\n')
+  }
+
 }
 
 .remove_dmptxtParts <- function(partName, dmpLines) {
@@ -378,9 +383,16 @@ shrinkDmpDotTxt <- function(fname) {
   if (length(partStart) != 0) {
     partEnd <- grep(paste("end of", partName), dmpLines)
     namesStart <- grep(" names =", dmpLines)
-    dmpLines[namesStart] <-
-      gsub(paste(",", partNameQuoted), "", dmpLines[namesStart], fixed = TRUE)
-    dmpLines <- dmpLines[-c(partStart:partEnd)]
+    if (length(partStart) == length(partEnd) &&
+        length(partStart) ==  length(namesStart)) {
+      for (partStartNumber in (length(partStart):1)) {
+        dmpLines[namesStart[partStartNumber]] <-
+          gsub(paste(",", partNameQuoted), "", dmpLines[namesStart[partStartNumber]], fixed = TRUE)
+
+        dmpLines <-
+          dmpLines[-c(partStart[partStartNumber]:partEnd[partStartNumber])]
+      }
+    }
   }
 
   dmpLines
@@ -388,7 +400,7 @@ shrinkDmpDotTxt <- function(fname) {
 
 reformatResidualsFile <- function(outFilename, localWorkingDir) {
   residualFilename <- file.path(localWorkingDir, "res.csv")
-  lines <- readLines(outFilename)
+  lines <- .get_outtxt(outFilename)
   b <- grep("residuals", lines)
   lines[b + 1] <-
     gsub("  ID1  ID2  ID3  ID4  ID5",
@@ -593,7 +605,7 @@ getCovariateNames <- function(modelFileName) {
   }
 
   TDL5_run <- system2(
-    file.path(installdir, "TDL5"),
+    path.expand(file.path(installdir, Sys.getenv("PML_BIN_DIR"), "TDL5")),
     args = c(
       NLME_HASH,
       "-i",
@@ -810,6 +822,11 @@ getMinimumNumSubjects <- function(controlFile, localDir) {
     lines <- readLines(controlFile)
   }
   numReplicates <- as.integer(lines[4])
+  datacolsFileNames <- .get_InputDataFileNames(lines)
+  colnameFile <- datacolsFileNames$cols1FileName
+  dataFilename <- datacolsFileNames$inputFileName
+
+
   smallestPopulation <- 9999999
   for (n in 1:numReplicates) {
     extraArgsFile <- getExtraArgumentFilename(lines[n + 4])
@@ -822,22 +839,22 @@ getMinimumNumSubjects <- function(controlFile, localDir) {
     extraLines <- readLines(extraArgsFile, warn = FALSE)
     numLines <- length(extraLines)
     numLinesPerRecord <-
-      numLines / length(grep("-anagrad", extraLines))
-    colnameFile <- "cols1.txt"
-    dataFilename <- "data1.txt"
+      numLines / length(grep("-rtol", extraLines))
+
     for (l in 1:numLinesPerRecord) {
       isThere <-
-        grep("data1", extraLines[(idx - 1) * numLinesPerRecord + l])
+        grep(dataFilename, extraLines[(idx - 1) * numLinesPerRecord + l])
       if (length(isThere) == 1) {
         tokens <-
           unlist(strsplit(extraLines[(idx - 1) * numLinesPerRecord + l], " "))
         for (t in tokens) {
-          if (length(grep("data1", t)) != 0) {
+          if (length(grep(dataFilename, t)) != 0) {
             dataFilename <- t
           }
         }
       }
     }
+
     num <- getNumSubjects(colnameFile, dataFilename, localDir)
     if (num < smallestPopulation) {
       smallestPopulation <- num
@@ -862,21 +879,28 @@ getScenarioKey <- function(outputFilename) {
 #'
 #' Extracts table names from the column definition file
 #'
-#' @param columnDefinitionFilename path to NLME column definition file
-#' @param simtbl logical. \code{TRUE} extracts simulation tables,
-#' \code{FALSE} extracts simple tables.
+#' @param columnDefinitionFilename path to NLME column definition file to be
+#'   read
+#' @param columnDefinitionText Lines of column definition file to be used (only
+#'   if `columnDefinitionFilename` is not given or `NULL`).
+#' @param simtbl logical. `TRUE` extracts simulation tables, `FALSE` extracts
+#'   simple tables.
 #'
-#' @return vector of names of the tables in column definition file if any,
-#' empty string otherwise
+#' @return vector of names of the tables in column definition file if any, empty
+#'   string otherwise
 #'
 #' @examples
 #' \dontrun{
-#' getTableNames("cols1.txt", simtbl = TRUE)
+#'   getTableNames(columnDefinitionFilename = "cols1.txt",
+#'                 simtbl = TRUE)
 #' }
 #'
+#' @md
 #' @export
 getTableNames <-
-  function(columnDefinitionFilename, simtbl = FALSE) {
+  function(columnDefinitionFilename,
+           columnDefinitionText,
+           simtbl = FALSE) {
     if (simtbl) {
       tableName <- "simtbl"
     } else {
@@ -884,7 +908,29 @@ getTableNames <-
     }
 
     TableNames <- ""
-    cols1Text <- readLines(columnDefinitionFilename)
+    if (missing(columnDefinitionFilename) ||
+        is.null(columnDefinitionFilename)) {
+      if (missing(columnDefinitionText) ||
+          !is.character(columnDefinitionText)) {
+        warning("If 'columnDefinitionFilename' argument is not given, ",
+                "'columnDefinitionText' argument should be provided. ",
+                "Returning empty vector.")
+
+        return(TableNames)
+      }
+
+      cols1Text <- columnDefinitionText
+    } else {
+      if (!file.exists(columnDefinitionFilename)) {
+        warning("'columnDefinitionFilename' argument points to non-existing file. ",
+                "Returning empty vector.")
+
+        return(TableNames)
+      }
+
+      cols1Text <- readLines(columnDefinitionFilename)
+    }
+
     indxs <-
       grep(paste0("\\W*", tableName, "\\W*\\(\\W*file\\W*="),
            cols1Text,
@@ -932,7 +978,7 @@ report_filesToGenerate <-
     filesPresent <-
       filesToGenerate[grepl(ReturnedFilesPattern, filesToGenerate)]
     GlobalSummaryLine2 <-
-      paste("Generating", filesPresent, collapse = "\n ")
+      paste("Generating", filesPresent, collapse = "\n")
     assign("GlobalSummaryLine2", GlobalSummaryLine2, envir = nlmeEnv)
     UpdateProgressMessages()
   }
@@ -954,4 +1000,14 @@ check_Arguments <- function(RequiredArgs, Args, FunctionName) {
   }
 
   stop("Please check the arguments for ", FunctionName, ":\n", StopMessage)
+}
+
+.get_cols1Text <- function(DirectoryToRead) {
+  dmp.txt <- .get_dmptxt(file.path(DirectoryToRead, "dmp.txt"))
+  if ("cols1.txt" %in% names(dmp.txt)) {
+    dmp.txt$cols1.txt
+  } else {
+    # guess the last one
+    dmp.txt[[length(dmp.txt)]]
+  }
 }

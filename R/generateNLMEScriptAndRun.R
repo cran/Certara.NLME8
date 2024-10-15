@@ -57,7 +57,7 @@ generateNLMEScriptAndRun <-
 
     INSTALLDIR <- path.expand(Sys.getenv("INSTALLDIR"))
     checkGCCResult <- checkGCC()
-    checkInstallDirResult <- checkInstallDir(INSTALLDIR)
+
     checkLicenseFileResult <- checkLicenseFile(INSTALLDIR)
 
     if (as.numeric(MpiNumCores) > 1) {
@@ -71,7 +71,7 @@ generateNLMEScriptAndRun <-
     }
 
     if (!checkGCCResult |
-        !checkInstallDirResult | !checkLicenseFileResult | !checkMPI) {
+        !checkLicenseFileResult | !checkMPI) {
       num_samples <- as.integer(get("num_samples", envir = nlmeEnv))
       CancelProgress(num_samples, 0, num_samples)
       return(FALSE)
@@ -224,7 +224,7 @@ generateNLMEScriptAndRun <-
 
 updateCompileStatus <- function(indx, tot) {
   GlobalSummaryLine1 <-
-    sprintf("Compiling %d of %d NLME models", indx, tot)
+    sprintf("Compiling %d of %d NLME models\n", indx, tot)
   assign("GlobalSummaryLine1", GlobalSummaryLine1, envir = nlmeEnv)
   GlobalSummaryLine2 <- ""
   assign("GlobalSummaryLine2", GlobalSummaryLine2, envir = nlmeEnv)

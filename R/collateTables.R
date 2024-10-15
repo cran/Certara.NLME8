@@ -1,4 +1,8 @@
 .get_IDcols <- function(cols1Text) {
+  if (exists("IDcol", envir = nlmeEnv)) {
+    return(get("IDcol", envir = nlmeEnv))
+  }
+
   IDlineNo <- grep("^\\W*id\\W*\\(.*)", cols1Text)
   IDcol <-
     unlist(
@@ -8,6 +12,8 @@
       )
     )
   IDcol <- IDcol[IDcol != ""]
+  assign("IDcol", IDcol, envir = nlmeEnv)
+
   IDcol
 }
 
@@ -152,14 +158,7 @@ collateTables <-
           # removing repl
           dataf[, 1] <- NULL
           if (first) {
-            rDumpFile <-
-              sprintf("%s/jobs/%02d/%d/%s",
-                      jobsBaseDirectory,
-                      jobBaseIndx,
-                      job,
-                      "dmp.txt")
-            dmp.txt <- .get_dmptxt(rDumpFile)
-            cols1Text <- dmp.txt$cols1.txt
+            cols1Text <- .get_cols1Text(dirname(fileToRead))
           }
 
           dataf <- .rename_IDs(cols1Text, dataf)

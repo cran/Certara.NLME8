@@ -22,8 +22,8 @@ test_that("running performVPC ", {
   )
 
   DataFiles <- list.files(DataLocation, pattern = "*")
-  file.copy(file.path(DataLocation, DataFiles),
-    NLME_ROOT_DIRECTORY,
+  file.copy(from = file.path(DataLocation, DataFiles),
+    to = NLME_ROOT_DIRECTORY,
     overwrite = TRUE
   )
 

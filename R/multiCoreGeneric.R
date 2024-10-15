@@ -25,8 +25,6 @@ multiCoreGeneric <- function(parallelMethod, jobType, numCoresToUse, allowInterm
     return(list(stat = FALSE, done = c()))
   }
 
-  writeOutGlobals(file.path(SharedWorkingDir, "myglobaldefs.r"))
-
   createJobsDirectory(SharedWorkingDir, num_samples)
 
   if (jobType == "BOOTSTRAP") {

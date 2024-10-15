@@ -6,9 +6,9 @@
 #' c(jobType, parallelMethod, install_dir, shared_directory,
 #' localWorkingDir, controlFile, NumProc, workflow_name, fixefUnits)
 #'
-#' @param partialJob is /code{TRUE} if it is not required to stop the job
+#' @param partialJob is \code{TRUE} if it is not required to stop the job
 #' as for covariate stepwise search
-#' @param allowIntermediateResults is /code{TRUE} if intermediate results
+#' @param allowIntermediateResults is \code{TRUE} if intermediate results
 #' are possible like for sorting
 #' @param progressStage stage of analysis to be reported
 #' @param func function to be executed after NLME job
@@ -122,9 +122,13 @@ performParallelNLMERun <- function(args,
   } else {
     if (tolower(parallelMethod) %in% c("local_mpi", "mpi")) {
       num_cores <- num_processes
-    } else {
+    } else if (grepl("(torque_mpi)|(sge_mpi)|(lsf_mpi)|(slurm_mpi)",
+                     parallelMethod,
+                     ignore.case = TRUE)) {
       num_cores <-
         figureOutMpiNumCoresForPop(num_samples, control_file, localWorkingDir)
+    } else {
+      num_cores <- 1
     }
   }
 

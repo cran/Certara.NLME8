@@ -37,13 +37,13 @@ generateResiduals <-
       if (nrow(dataf) == 0)
         next
 
-      dmp.txt <- .get_dmptxt(rDumpFile)
-
       # substituting values without meaning
       dataf$PREDSE[dataf$PREDSE %in% c(0, 3.3e-151)] <- NA
       # adding VIF if available
       dataf <- .get_VIFobs(fileToRead, dataf)
-      dataf <- .rename_IDs(dmp.txt$cols1.txt, dataf)
+
+      cols1Text <- .get_cols1Text(dirname(fileToRead))
+      dataf <- .rename_IDs(cols1Text, dataf)
 
       # Add the scenario name
       dataf <-
@@ -81,17 +81,6 @@ generateResiduals <-
           ObsNamePos,
           (TadSeqColumnNamePos + 1):ncol(resultsDataframe)
         )]
-      if (!is.null(resultsDataframe$PCWRES)) {
-        if (all(na.omit(resultsDataframe$PCWRES) == 0)) {
-          resultsDataframe$PCWRES <- NULL
-        }
-      }
-
-      if (!is.null(resultsDataframe$CdfPCWRES)) {
-        if (all(na.omit(resultsDataframe$CdfPCWRES) == 0)) {
-          resultsDataframe$CdfPCWRES <- NULL
-        }
-      }
 
       write.csv(
         resultsDataframe,

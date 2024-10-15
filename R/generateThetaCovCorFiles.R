@@ -65,20 +65,23 @@ generateThetaCovCorFiles <-
 
       # out file is required for VIF
       outFile <- OutFileNames[job]
-      # figure out VIF if presented
-      VIFs <- .get_VIFs(outFile)
+
       if (!is.null(names(fixefUnits))) {
         matchedFixefs <- match(fixefUnits, fixedEffectNames)
         # units are in names
         names(fixedEffectNames)[matchedFixefs] <-
           names(fixefUnits)[matchedFixefs]
-        names(fixedEffectNames)[is.na(names(fixedEffectNames))] <-
-          ""
       } else {
-        names(fixedEffectNames) <- rep("", numFixedEffects)
+        names(fixedEffectNames) <-
+          attr(.parse_OutFileStructure(outFile, ToCapture = "fixed effects"), "units")
       }
 
-      VIFsGiven <- .get_VIFs(outFile)
+      names(fixedEffectNames)[is.na(names(fixedEffectNames))] <-
+        ""
+
+      # figure out VIF if presented
+      VIFsGiven <-
+        .parse_OutFileStructure(outFile, ToCapture = "varFixefInf")
       if (!is.null(names(VIFsGiven))) {
         matchedFixefs <- match(fixedEffectNames, names(VIFsGiven))
         VIFs <- VIFsGiven[matchedFixefs]
@@ -86,7 +89,6 @@ generateThetaCovCorFiles <-
       } else {
         VIFs <- rep(NA, numFixedEffects)
       }
-
       # Figure out Stderr, CV%, CI%
       if (length(varFix) > 0) {
         CurrentVariance <- diag(varFix)

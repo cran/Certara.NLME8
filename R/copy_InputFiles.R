@@ -39,7 +39,8 @@ copy_InputFiles <- function(dirToCopyTo) {
     Sys.chmod(list.files(
       path = Sys.getenv("INSTALLDIR"),
       pattern = "*.sh|TDL5$",
-      full.names = TRUE
+      full.names = TRUE,
+      recursive = TRUE
     ),
     mode = "777")
   }
